@@ -1,8 +1,9 @@
 import { Project, PlatformConfig } from '../types';
 
-const PROJECTS_KEY = 'velora_all_projects_v1';
-const ACTIVE_KEY = 'velora_active_project_v1';
-const CONFIG_KEY = 'velora_platform_config_v1';
+const PROJECTS_KEY = 'bookforge_all_projects_v1';
+const ACTIVE_KEY = 'bookforge_active_project_v1';
+const CONFIG_KEY = 'bookforge_platform_config_v1';
+const CLIENT_ID_KEY = 'bookforge_client_id_v1';
 
 export interface PersistenceSnapshot {
   activeProject: Project | null;
@@ -23,8 +24,24 @@ function writeLocal<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // localStorage is a fallback only; server persistence remains authoritative.
+    // localStorage is a fallback only; server persistence remains available when possible.
   }
+}
+
+function getClientId(): string {
+  try {
+    const existing = localStorage.getItem(CLIENT_ID_KEY);
+    if (existing && /^[0-9a-f-]{36}$/i.test(existing)) return existing;
+    const id = crypto.randomUUID();
+    localStorage.setItem(CLIENT_ID_KEY, id);
+    return id;
+  } catch {
+    return 'anonymous-browser';
+  }
+}
+
+function clientHeaders(): HeadersInit {
+  return { 'X-Client-Id': getClientId() };
 }
 
 export function readLocalSnapshot(): PersistenceSnapshot {
@@ -43,7 +60,7 @@ export function writeLocalSnapshot(snapshot: PersistenceSnapshot): void {
 
 export async function loadServerSnapshot(): Promise<PersistenceSnapshot | null> {
   try {
-    const response = await fetch('/api/state', { headers: { Accept: 'application/json' } });
+    const response = await fetch('/api/state', { headers: { ...clientHeaders(), Accept: 'application/json' } });
     if (!response.ok) return null;
     return (await response.json()) as PersistenceSnapshot;
   } catch {
@@ -55,7 +72,7 @@ export async function saveServerSnapshot(snapshot: PersistenceSnapshot): Promise
   try {
     const response = await fetch('/api/state', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { ...clientHeaders(), 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(snapshot)
     });
     return response.ok;
