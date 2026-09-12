@@ -5,6 +5,10 @@ const ACTIVE_KEY = 'bookforge_active_project_v1';
 const CONFIG_KEY = 'bookforge_platform_config_v1';
 const CLIENT_ID_KEY = 'bookforge_client_id_v1';
 
+const LEGACY_PROJECTS_KEY = 'velora_all_projects_v1';
+const LEGACY_ACTIVE_KEY = 'velora_active_project_v1';
+const LEGACY_CONFIG_KEY = 'velora_platform_config_v1';
+
 export interface PersistenceSnapshot {
   activeProject: Project | null;
   allProjects: Project[];
@@ -36,7 +40,7 @@ function getClientId(): string {
     localStorage.setItem(CLIENT_ID_KEY, id);
     return id;
   } catch {
-    return 'anonymous-browser';
+    return '00000000-0000-4000-8000-000000000000';
   }
 }
 
@@ -46,9 +50,9 @@ function clientHeaders(): HeadersInit {
 
 export function readLocalSnapshot(): PersistenceSnapshot {
   return {
-    activeProject: readLocal<Project>(ACTIVE_KEY),
-    allProjects: readLocal<Project[]>(PROJECTS_KEY) ?? [],
-    platformConfig: readLocal<PlatformConfig>(CONFIG_KEY)
+    activeProject: readLocal<Project>(ACTIVE_KEY) ?? readLocal<Project>(LEGACY_ACTIVE_KEY),
+    allProjects: readLocal<Project[]>(PROJECTS_KEY) ?? readLocal<Project[]>(LEGACY_PROJECTS_KEY) ?? [],
+    platformConfig: readLocal<PlatformConfig>(CONFIG_KEY) ?? readLocal<PlatformConfig>(LEGACY_CONFIG_KEY)
   };
 }
 
