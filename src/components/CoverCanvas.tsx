@@ -88,34 +88,16 @@ export const CoverCanvas: React.FC<CoverCanvasProps> = ({
 
   if (mode === 'front') {
     return (
-      <div
-        className={`relative aspect-[1/1.55] rounded-lg shadow-2xl overflow-hidden flex flex-col justify-between p-8 border border-white/10 select-none ${className}`}
-        style={{ backgroundColor: bgColor }}
-      >
+      <div className={`relative aspect-[1/1.55] rounded-lg shadow-2xl overflow-hidden flex flex-col justify-between p-8 border border-white/10 select-none ${className}`} style={{ backgroundColor: bgColor }}>
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
         <div className="absolute inset-4 rounded border pointer-events-none" style={{ borderColor: `${accentColor}33` }} />
         <div className="absolute inset-5 rounded border pointer-events-none" style={{ borderColor: `${accentColor}18` }} />
-
-        <div className="relative z-10 text-center pt-2">
-          <span className="text-[10px] uppercase tracking-[0.3em] font-semibold opacity-75" style={{ color: accentColor }}>
-            A BOOKFORGE AI ORIGINAL WORK
-          </span>
-        </div>
-
-        <div className="relative z-10 my-auto flex justify-center py-4">
-          <svg viewBox="0 0 300 300" className="w-48 h-48 drop-shadow-md">{renderMotifSvg()}</svg>
-        </div>
-
+        <div className="relative z-10 text-center pt-2"><span className="text-[10px] uppercase tracking-[0.3em] font-semibold opacity-75" style={{ color: accentColor }}>A BOOKFORGE AI ORIGINAL WORK</span></div>
+        <div className="relative z-10 my-auto flex justify-center py-4"><svg viewBox="0 0 300 300" className="w-48 h-48 drop-shadow-md">{renderMotifSvg()}</svg></div>
         <div className="relative z-10 text-center pb-3 space-y-2">
-          <h1 className={`text-2xl sm:text-3xl uppercase font-bold leading-tight drop-shadow-lg ${fontClass}`} style={{ color: '#ffffff' }}>
-            {title}
-          </h1>
+          <h1 className={`text-2xl sm:text-3xl uppercase font-bold leading-tight drop-shadow-lg ${fontClass}`} style={{ color: '#ffffff' }}>{title}</h1>
           {subtitle && <p className="text-xs italic tracking-wider font-light line-clamp-2 max-w-[90%] mx-auto" style={{ color: accentColor }}>{subtitle}</p>}
-          <div className="pt-4 flex items-center justify-center gap-2">
-            <span className="h-px w-6" style={{ backgroundColor: `${accentColor}66` }} />
-            <span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: '#ffffff' }}>{author}</span>
-            <span className="h-px w-6" style={{ backgroundColor: `${accentColor}66` }} />
-          </div>
+          <div className="pt-4 flex items-center justify-center gap-2"><span className="h-px w-6" style={{ backgroundColor: `${accentColor}66` }} /><span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: '#ffffff' }}>{author}</span><span className="h-px w-6" style={{ backgroundColor: `${accentColor}66` }} /></div>
         </div>
       </div>
     );
@@ -123,36 +105,17 @@ export const CoverCanvas: React.FC<CoverCanvasProps> = ({
 
   if (mode === 'back') {
     return (
-      <div
-        className={`relative aspect-[1/1.55] rounded-lg shadow-2xl overflow-hidden flex flex-col justify-between p-8 border border-white/10 select-none ${className}`}
-        style={{ backgroundColor: bgColor }}
-      >
+      <div className={`relative aspect-[1/1.55] rounded-lg shadow-2xl overflow-hidden flex flex-col justify-between p-8 border border-white/10 select-none ${className}`} style={{ backgroundColor: bgColor }}>
         <div className="absolute inset-4 rounded border pointer-events-none" style={{ borderColor: `${accentColor}25` }} />
-        <div className="relative z-10 text-center pt-2">
-          <p className="text-xs tracking-widest uppercase font-semibold" style={{ color: accentColor }}>ABOUT THE BOOK</p>
-        </div>
+        <div className="relative z-10 text-center pt-2"><p className="text-xs tracking-widest uppercase font-semibold" style={{ color: accentColor }}>ABOUT THE BOOK</p></div>
         <div className="relative z-10 my-auto px-2 space-y-4 text-center">
           <div className="w-8 h-px mx-auto" style={{ backgroundColor: accentColor }} />
-          <p className="text-xs sm:text-sm leading-relaxed text-slate-200 font-serif italic line-clamp-8">
-            {backCoverBlurb || 'Add a back-cover description for this project.'}
-          </p>
+          <p className="text-xs sm:text-sm leading-relaxed text-slate-200 font-serif italic line-clamp-8">{backCoverBlurb || 'Add a back-cover description for this project.'}</p>
           <div className="w-8 h-px mx-auto" style={{ backgroundColor: accentColor }} />
         </div>
         <div className="relative z-10 flex items-end justify-between pt-4 border-t border-white/10">
-          <div className="text-left">
-            <span className="block text-[9px] uppercase tracking-wider text-slate-400">PUBLISHED VIA BOOKFORGE AI</span>
-            <span className="text-[9px] font-mono text-slate-300">{config?.genre || 'BOOK'}</span>
-          </div>
-          {barcodeText && (
-            <div className="bg-white p-1 rounded shadow text-slate-950 text-center">
-              <div className="flex gap-[2px] h-6 items-center px-1">
-                {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 3].map((w, i) => (
-                  <div key={i} className="bg-black h-full" style={{ width: `${w}px` }} />
-                ))}
-              </div>
-              <span className="block text-[7px] font-mono tracking-tighter">{barcodeText}</span>
-            </div>
-          )}
+          <div className="text-left"><span className="block text-[9px] uppercase tracking-wider text-slate-400">PUBLISHED VIA BOOKFORGE AI</span><span className="text-[9px] font-mono text-slate-300">BOOK</span></div>
+          {barcodeText && <div className="bg-white p-1 rounded shadow text-slate-950 text-center"><div className="flex gap-[2px] h-6 items-center px-1">{[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 3].map((w, i) => <div key={i} className="bg-black h-full" style={{ width: `${w}px` }} />)}</div><span className="block text-[7px] font-mono tracking-tighter">{barcodeText}</span></div>}
         </div>
       </div>
     );
@@ -160,30 +123,9 @@ export const CoverCanvas: React.FC<CoverCanvasProps> = ({
 
   return (
     <div className={`relative w-full aspect-[2.1/1] rounded-xl shadow-2xl overflow-hidden flex border border-white/15 select-none ${className}`} style={{ backgroundColor: bgColor }}>
-      <div className="w-[45%] h-full p-6 flex flex-col justify-between border-r border-white/5 relative">
-        <span className="text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: accentColor }}>SYNOPSIS</span>
-        <p className="text-[11px] leading-relaxed text-slate-300 font-serif italic line-clamp-6">{backCoverBlurb}</p>
-        <div className="text-[8px] font-mono text-slate-400">{barcodeText}</div>
-      </div>
-
-      <div className="w-[10%] h-full flex flex-col items-center justify-between py-6 border-x border-white/10 relative" style={{ backgroundColor: `${bgColor}dd` }}>
-        <span className="text-[8px] tracking-widest text-slate-400 uppercase rotate-90 my-2">BOOKFORGE AI</span>
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-[10px] font-bold tracking-wider text-slate-100 uppercase -rotate-90 whitespace-nowrap" style={{ color: accentColor }}>
-            {title} &bull; {author}
-          </span>
-        </div>
-        <span className="text-[7px] font-mono text-slate-400 rotate-90 my-2">{spineWidthMm}mm</span>
-      </div>
-
-      <div className="w-[45%] h-full p-6 flex flex-col justify-between relative">
-        <div className="text-right"><span className="text-[8px] uppercase tracking-[0.2em]" style={{ color: accentColor }}>ORIGINAL WORK</span></div>
-        <div className="my-auto text-center">
-          <h2 className={`text-lg uppercase font-bold tracking-wider leading-tight ${fontClass}`} style={{ color: '#ffffff' }}>{title}</h2>
-          <p className="text-[10px] italic text-slate-300 mt-1">{subtitle}</p>
-        </div>
-        <div className="text-center"><span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-slate-200">{author}</span></div>
-      </div>
+      <div className="w-[45%] h-full p-6 flex flex-col justify-between border-r border-white/5 relative"><span className="text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: accentColor }}>SYNOPSIS</span><p className="text-[11px] leading-relaxed text-slate-300 font-serif italic line-clamp-6">{backCoverBlurb}</p><div className="text-[8px] font-mono text-slate-400">{barcodeText}</div></div>
+      <div className="w-[10%] h-full flex flex-col items-center justify-between py-6 border-x border-white/10 relative" style={{ backgroundColor: `${bgColor}dd` }}><span className="text-[8px] tracking-widest text-slate-400 uppercase rotate-90 my-2">BOOKFORGE AI</span><div className="flex-1 flex items-center justify-center"><span className="text-[10px] font-bold tracking-wider text-slate-100 uppercase -rotate-90 whitespace-nowrap" style={{ color: accentColor }}>{title} &bull; {author}</span></div><span className="text-[7px] font-mono text-slate-400 rotate-90 my-2">{spineWidthMm}mm</span></div>
+      <div className="w-[45%] h-full p-6 flex flex-col justify-between relative"><div className="text-right"><span className="text-[8px] uppercase tracking-[0.2em]" style={{ color: accentColor }}>ORIGINAL WORK</span></div><div className="my-auto text-center"><h2 className={`text-lg uppercase font-bold tracking-wider leading-tight ${fontClass}`} style={{ color: '#ffffff' }}>{title}</h2><p className="text-[10px] italic text-slate-300 mt-1">{subtitle}</p></div><div className="text-center"><span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-slate-200">{author}</span></div></div>
     </div>
   );
 };
