@@ -10,8 +10,9 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-const STATE_FILE = path.join(process.env.BOOKFORGE_STATE_DIR || path.join(process.cwd(), 'data'), 'state.json');
+const STATE_DIR = process.env.BOOKFORGE_STATE_DIR || path.join(process.cwd(), 'data');
 const MAX_STATE_BYTES = 5 * 1024 * 1024;
+const MAX_CLIENT_ID_LENGTH = 100;
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -60,9 +61,21 @@ function jsonResult(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
-async function readState(): Promise<unknown | null> {
+function getClientId(req: express.Request): string {
+  const raw = req.header('x-client-id')?.trim() || '';
+  if (!/^[0-9a-f-]{36}$/i.test(raw) || raw.length > MAX_CLIENT_ID_LENGTH) {
+    throw new Error('Invalid client id');
+  }
+  return raw.toLowerCase();
+}
+
+function stateFileFor(clientId: string): string {
+  return path.join(STATE_DIR, `state-${clientId}.json`);
+}
+
+async function readState(clientId: string): Promise<unknown | null> {
   try {
-    const raw = await fs.readFile(STATE_FILE, 'utf8');
+    const raw = await fs.readFile(stateFileFor(clientId), 'utf8');
     return JSON.parse(raw);
   } catch (error: any) {
     if (error?.code === 'ENOENT') return null;
@@ -70,36 +83,39 @@ async function readState(): Promise<unknown | null> {
   }
 }
 
-async function writeState(state: unknown): Promise<void> {
+async function writeState(clientId: string, state: unknown): Promise<void> {
   const serialized = JSON.stringify(state);
   if (Buffer.byteLength(serialized, 'utf8') > MAX_STATE_BYTES) throw new Error('State payload exceeds the 5 MB limit');
-  const directory = path.dirname(STATE_FILE);
-  await fs.mkdir(directory, { recursive: true });
-  const temp = `${STATE_FILE}.${crypto.randomUUID()}.tmp`;
+  await fs.mkdir(STATE_DIR, { recursive: true, mode: 0o700 });
+  const stateFile = stateFileFor(clientId);
+  const temp = `${stateFile}.${crypto.randomUUID()}.tmp`;
   await fs.writeFile(temp, serialized, { encoding: 'utf8', mode: 0o600 });
-  await fs.rename(temp, STATE_FILE);
+  await fs.rename(temp, stateFile);
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', platform: 'BookForge AI', hasGeminiKey: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL, persistence: 'server-file' });
+  res.json({ status: 'ok', platform: 'BookForge AI', hasGeminiKey: Boolean(process.env.GEMINI_API_KEY), model: GEMINI_MODEL, persistence: 'server-file-per-client' });
 });
 
-app.get('/api/state', async (_req, res) => {
+app.get('/api/state', async (req, res) => {
   try {
-    const state = await readState();
+    const clientId = getClientId(req);
+    const state = await readState(clientId);
     res.json(state ?? { activeProject: null, allProjects: [], platformConfig: null });
-  } catch {
-    res.status(500).json({ error: 'Unable to read project state' });
+  } catch (error: any) {
+    res.status(error?.message === 'Invalid client id' ? 400 : 500).json({ error: error?.message || 'Unable to read project state' });
   }
 });
 
 app.put('/api/state', async (req, res) => {
   try {
+    const clientId = getClientId(req);
     if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return res.status(400).json({ error: 'Invalid state payload' });
-    await writeState(req.body);
+    await writeState(clientId, req.body);
     res.status(204).end();
   } catch (error: any) {
-    res.status(error?.message?.includes('5 MB') ? 413 : 500).json({ error: error?.message || 'Unable to save project state' });
+    const status = error?.message === 'Invalid client id' ? 400 : error?.message?.includes('5 MB') ? 413 : 500;
+    res.status(status).json({ error: error?.message || 'Unable to save project state' });
   }
 });
 
@@ -185,7 +201,7 @@ app.post('/api/orchestrator/generate-visual-motif', async (req, res) => {
     const chosen = palettes[key];
     return res.json({ title: title || 'UNTITLED', subtitle, author, accentColor: chosen.accent, bgColor: chosen.bg, fontFamily: chosen.font, motif: `${style}-${chosen.motif}`, backCoverBlurb: '', spineWidthMm: 16, barcodeText: '', generatedBy: 'deterministic-cover-renderer' });
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message || 'Visual generation failed' });
+    return res.status(500).json({ error: error?.message || 'Visual motif generation failed' });
   }
 });
 
