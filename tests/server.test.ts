@@ -47,3 +47,42 @@ test('state endpoint rejects malformed client identity', async () => {
   const body = await response.json() as { error?: string };
   assert.equal(body.error, 'Invalid client id');
 });
+
+test('state endpoint rejects array payloads', async () => {
+  const response = await fetch(`${baseUrl}/api/state`, {
+    method: 'PUT',
+    headers: {
+      'X-Client-Id': '00000000-0000-4000-8000-000000000001',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify([])
+  });
+  assert.equal(response.status, 400);
+  const body = await response.json() as { error?: string };
+  assert.equal(body.error, 'Invalid state payload');
+});
+
+test('state endpoint persists and returns a client snapshot', async () => {
+  const clientId = '00000000-0000-4000-8000-000000000002';
+  const snapshot = {
+    activeProject: { id: 'test-project', title: 'Persistence Test' },
+    allProjects: [{ id: 'test-project', title: 'Persistence Test' }],
+    platformConfig: { brandName: 'BookForge AI' }
+  };
+
+  const saveResponse = await fetch(`${baseUrl}/api/state`, {
+    method: 'PUT',
+    headers: {
+      'X-Client-Id': clientId,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(snapshot)
+  });
+  assert.equal(saveResponse.status, 204);
+
+  const readResponse = await fetch(`${baseUrl}/api/state`, {
+    headers: { 'X-Client-Id': clientId }
+  });
+  assert.equal(readResponse.status, 200);
+  assert.deepEqual(await readResponse.json(), snapshot);
+});
