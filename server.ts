@@ -23,7 +23,7 @@ app.use((_req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   next();
 });
-app.use(express.json({ limit: '2mb', strict: true }));
+app.use(express.json({ limit: '5mb', strict: true }));
 
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 const RATE_WINDOW_MS = 60_000;
@@ -137,11 +137,18 @@ app.post('/api/orchestrator/build-plan-bible', async (req, res) => {
   try {
     const title = requireString(req.body?.title, 'title', 500);
     const rawIdea = requireString(req.body?.rawIdea, 'rawIdea', 20_000);
-    const chapterCount = Math.max(1, Math.min(30, Number(req.body?.chapterCount || 5)));
+    const rawChapterCount = req.body?.chapterCount;
+    const chapterCount = rawChapterCount === undefined || rawChapterCount === null || rawChapterCount === ''
+      ? 5
+      : Number(rawChapterCount);
+    if (!Number.isFinite(chapterCount) || !Number.isInteger(chapterCount)) {
+      return res.status(400).json({ error: 'chapterCount must be a finite integer' });
+    }
+    const boundedChapterCount = Math.max(1, Math.min(30, chapterCount));
     const subtitle = typeof req.body?.subtitle === 'string' ? req.body.subtitle.slice(0, 500) : '';
     const intent = req.body?.intent || {};
     const language = typeof req.body?.language === 'string' ? req.body.language.slice(0, 100) : 'English';
-    const prompt = `You are BookForge AI's Lead Story Architect. Build a comprehensive Work Plan and Story Bible.\nTitle: ${title}\nSubtitle: ${subtitle}\nIdea: ${rawIdea}\nGenre: ${intent.genre || 'Fiction'} | Tone: ${intent.tone || 'Immersive'} | Language: ${language}\nRequired chapters: ${chapterCount}\n\nReturn ONLY valid JSON with keys plan and bible. plan must contain premise, centralConflict, threeActBreakdown, and chaptersPlan. Generate exactly ${chapterCount} chapters. bible must contain characters, worldBuilding, timeline, thematicPillars, narrativeRules, continuityChecklist. Keep continuity explicit and internally consistent.`;
+    const prompt = `You are BookForge AI's Lead Story Architect. Build a comprehensive Work Plan and Story Bible.\nTitle: ${title}\nSubtitle: ${subtitle}\nIdea: ${rawIdea}\nGenre: ${intent.genre || 'Fiction'} | Tone: ${intent.tone || 'Immersive'} | Language: ${language}\nRequired chapters: ${boundedChapterCount}\n\nReturn ONLY valid JSON with keys plan and bible. plan must contain premise, centralConflict, threeActBreakdown, and chaptersPlan. Generate exactly ${boundedChapterCount} chapters. bible must contain characters, worldBuilding, timeline, thematicPillars, narrativeRules, continuityChecklist. Keep continuity explicit and internally consistent.`;
     const response = await getGemini().models.generateContent({ model: GEMINI_MODEL, contents: prompt, config: { responseMimeType: 'application/json' } });
     if (!response.text) throw new Error('AI returned an empty plan response');
     return res.json(jsonResult(response.text));
@@ -158,7 +165,7 @@ app.post('/api/orchestrator/generate-chapter', async (req, res) => {
     const previousSummary = typeof req.body?.previousSummary === 'string' ? req.body.previousSummary.slice(0, 20_000) : '';
     const fullPremise = typeof req.body?.fullPremise === 'string' ? req.body.fullPremise.slice(0, 20_000) : '';
     const language = typeof req.body?.language === 'string' ? req.body.language.slice(0, 100) : 'English';
-    const prompt = `You are BookForge AI's Master Prose Engine. Write the complete prose for Chapter ${chapterPlan.chapterNumber}: "${chapterPlan.title}". Project: ${projectTitle}. Premise: ${fullPremise}. Language: ${language}. POV: ${chapterPlan.povCharacter}. Setting: ${chapterPlan.setting}. Objective: ${chapterPlan.dramaticObjective}. Plot beats: ${JSON.stringify(chapterPlan.plotBeats || [])}. Story bible characters: ${JSON.stringify(req.body?.bible?.characters || [])}. World rules: ${JSON.stringify(req.body?.bible?.worldBuilding || [])}. Themes: ${JSON.stringify(req.body?.bible?.thematicPillars || [])}. Previous context: ${previousSummary}. Write real, complete literary prose, not an outline or placeholder. Target approximately 800-1400 words. Do not use markdown headings.`;
+    const prompt = `You are BookForge AI's Master Prose Engine. Write the complete prose for Chapter ${chapterPlan.chapterNumber}: \"${chapterPlan.title}\". Project: ${projectTitle}. Premise: ${fullPremise}. Language: ${language}. POV: ${chapterPlan.povCharacter}. Setting: ${chapterPlan.setting}. Objective: ${chapterPlan.dramaticObjective}. Plot beats: ${JSON.stringify(chapterPlan.plotBeats || [])}. Story bible characters: ${JSON.stringify(req.body?.bible?.characters || [])}. World rules: ${JSON.stringify(req.body?.bible?.worldBuilding || [])}. Themes: ${JSON.stringify(req.body?.bible?.thematicPillars || [])}. Previous context: ${previousSummary}. Write real, complete literary prose, not an outline or placeholder. Target approximately 800-1400 words. Do not use markdown headings.`;
     const response = await getGemini().models.generateContent({ model: GEMINI_MODEL, contents: prompt });
     const prose = response.text?.trim() || '';
     if (!prose) throw new Error('AI returned empty chapter prose');
@@ -175,7 +182,7 @@ app.post('/api/orchestrator/validate-chapter', async (req, res) => {
     const chapterPlan = req.body?.chapterPlan || {};
     const strictness = typeof req.body?.strictness === 'string' ? req.body.strictness.slice(0, 30) : 'balanced';
     const wordCount = prose.split(/\s+/).filter(Boolean).length;
-    const prompt = `You are BookForge AI's Editorial Quality Gate. Evaluate this chapter against the plan. Word count: ${wordCount}. Title: ${chapterPlan.title || ''}. POV: ${chapterPlan.povCharacter || ''}. Objective: ${chapterPlan.dramaticObjective || ''}. Strictness: ${strictness}.\n\nPROSE:\n${prose.slice(0, 12_000)}\n\nEvaluate continuity, sensory texture, pacing/tension, dialogue, and completeness. Return ONLY valid JSON: {"passed":true,"score":0,"wordCount":${wordCount},"feedback":[""],"repairsNeeded":[]}. Score 0-100. Do not invent facts not present in the supplied material.`;
+    const prompt = `You are BookForge AI's Editorial Quality Gate. Evaluate this chapter against the plan. Word count: ${wordCount}. Title: ${chapterPlan.title || ''}. POV: ${chapterPlan.povCharacter || ''}. Objective: ${chapterPlan.dramaticObjective || ''}. Strictness: ${strictness}.\n\nPROSE:\n${prose.slice(0, 12_000)}\n\nEvaluate continuity, sensory texture, pacing/tension, dialogue, and completeness. Return ONLY valid JSON: {\"passed\":true,\"score\":0,\"wordCount\":${wordCount},\"feedback\":[\"\"],\"repairsNeeded\":[]}. Score 0-100. Do not invent facts not present in the supplied material.`;
     const response = await getGemini().models.generateContent({ model: GEMINI_MODEL, contents: prompt, config: { responseMimeType: 'application/json' } });
     if (!response.text) throw new Error('AI returned empty validation');
     return res.json(jsonResult(response.text));
