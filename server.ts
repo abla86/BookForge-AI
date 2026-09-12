@@ -7,7 +7,7 @@ import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const STATE_DIR = process.env.BOOKFORGE_STATE_DIR || path.join(process.cwd(), 'data');
@@ -20,7 +20,7 @@ app.use((_req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; connect-src 'self' https://generativelanguage.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   next();
 });
 app.use(express.json({ limit: '2mb', strict: true }));
@@ -205,7 +205,7 @@ app.post('/api/orchestrator/generate-visual-motif', async (req, res) => {
   }
 });
 
-async function startServer() {
+export async function startServer(): Promise<import('http').Server> {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
@@ -215,10 +215,12 @@ async function startServer() {
     app.use(express.static(distPath));
     app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
-  app.listen(PORT, '0.0.0.0', () => console.log(`BookForge AI server online at http://0.0.0.0:${PORT}`));
+  return app.listen(PORT, '0.0.0.0', () => console.log(`BookForge AI server online at http://0.0.0.0:${PORT}`));
 }
 
-startServer().catch((error) => {
-  console.error('Fatal server startup error:', error);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  startServer().catch((error) => {
+    console.error('Fatal server startup error:', error);
+    process.exit(1);
+  });
+}
