@@ -22,7 +22,7 @@ export async function generateEpubBlob(project: Project): Promise<Blob> {
   );
 
   const oebps = zip.folder('OEBPS')!;
-  const uuid = `urn:uuid:${project.id || 'velora-pub-' + Date.now()}`;
+  const uuid = `urn:uuid:${project.id || 'bookforge-pub-' + Date.now()}`;
   const now = new Date().toISOString().split('T')[0];
 
   // 3. Stylesheet
@@ -93,7 +93,7 @@ p.opening::first-letter {
       <p class="opening" style="font-size: 1.2em; letter-spacing: 0.1em; font-family: 'Cinzel', serif;">BY ${escapeXml(project.author.toUpperCase())}</p>
     </div>
     <div class="meta-block">
-      <p>Published via VELORA Creative Production &amp; Publishing Platform</p>
+      <p>Published via BookForge AI Publishing Platform</p>
       <p style="font-size: 0.85em; color: #888;">Publication Date: ${now}</p>
     </div>
   </div>
@@ -188,7 +188,7 @@ p.opening::first-letter {
     <dc:creator>${escapeXml(project.author)}</dc:creator>
     <dc:language>${escapeXml(project.intent.language || 'en')}</dc:language>
     <dc:date>${now}</dc:date>
-    <dc:publisher>VELORA Platform</dc:publisher>
+    <dc:publisher>BookForge AI</dc:publisher>
     <dc:description>${escapeXml(project.intent.logline || '')}</dc:description>
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')}</meta>
   </metadata>
@@ -226,7 +226,7 @@ export function downloadBlob(blob: Blob, filename: string) {
 export function exportProjectToJson(project: Project) {
   const data = JSON.stringify(project, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
-  const filename = `${sanitizeFilename(project.title)}_velora_project.json`;
+  const filename = `${sanitizeFilename(project.title)}_bookforge_project.json`;
   downloadBlob(blob, filename);
 }
 

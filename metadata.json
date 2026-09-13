@@ -1,5 +1,5 @@
 {
-  "name": "VELORA",
+  "name": "BookForge AI",
   "description": "An AI creative production and publishing platform orchestrating projects from user idea to publishable books, visuals, and multi-format publications.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

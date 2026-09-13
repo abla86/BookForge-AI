@@ -5,6 +5,7 @@ export interface HealthCheckResponse {
   platform: string;
   hasGeminiKey: boolean;
   model: string;
+  persistence?: string;
 }
 
 export async function checkServerHealth(): Promise<HealthCheckResponse> {
@@ -13,7 +14,7 @@ export async function checkServerHealth(): Promise<HealthCheckResponse> {
     if (!res.ok) throw new Error('Health check failed');
     return await res.json();
   } catch {
-    return { status: 'offline', platform: 'VELORA', hasGeminiKey: false, model: 'local' };
+    return { status: 'offline', platform: 'BookForge AI', hasGeminiKey: false, model: 'local', persistence: 'local-fallback' };
   }
 }
 
@@ -79,14 +80,7 @@ export async function generateChapterProse(
   const res = await fetch('/api/orchestrator/generate-chapter', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      projectTitle,
-      chapterPlan,
-      bible,
-      previousSummary,
-      fullPremise,
-      language
-    })
+    body: JSON.stringify({ projectTitle, chapterPlan, bible, previousSummary, fullPremise, language })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
